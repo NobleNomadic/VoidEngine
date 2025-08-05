@@ -1,3 +1,2 @@
-# MC1
-*Modular-Combatant 1*
-Minimal platformer made with java.
+# VoidEngine
+Void engine is a minimal entity component system based game engine made with java.
