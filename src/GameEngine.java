@@ -1,22 +1,47 @@
-// GameEngine.java - Main engine, GameEngine class represents a full game structure
+// GameEngine.java - Minimal engine, with draw-to-screen support
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.*;
+import java.io.File;
 import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.*;
 
 public class GameEngine {
   // === ENGINE STATE ===
   public List<GameObject> gameObjects = new ArrayList<>();
+
+  private JFrame window;
+  private Canvas canvas;
+  private BufferStrategy bufferStrategy;
+  private final int WIDTH = 800;
+  private final int HEIGHT = 600;
 
   // Add a game object
   public void addGameObject(GameObject obj) {
     gameObjects.add(obj);
   }
 
+  // Create window and canvas
+  public void createWindow() {
+    window = new JFrame("Minimal Game Engine");
+    canvas = new Canvas();
+    canvas.setPreferredSize(new Dimension(WIDTH, HEIGHT));
+    window.add(canvas);
+    window.pack();
+    window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    window.setLocationRelativeTo(null);
+    window.setVisible(true);
+    window.setResizable(false);
+    canvas.createBufferStrategy(2);
+    bufferStrategy = canvas.getBufferStrategy();
+  }
+
   // Engine logic
   public void engineStart() {
+    createWindow();
+
     // Initialise each object by calling its awake method
     for (GameObject object : gameObjects) {
       object.objectAwake();
@@ -29,6 +54,9 @@ public class GameEngine {
         object.objectUpdate();
       }
 
+      // Draw everything to screen
+      render();
+
       // Delay for simple fixed frame rate (~60fps)
       try {
         Thread.sleep(16);
@@ -36,6 +64,37 @@ public class GameEngine {
         e.printStackTrace();
       }
     }
+  }
+
+  // Render all objects with sprite components
+  private void render() {
+    Graphics g = bufferStrategy.getDrawGraphics();
+
+    // Clear screen
+    g.setColor(Color.BLACK);
+    g.fillRect(0, 0, WIDTH, HEIGHT);
+
+    // Draw sprite components
+    for (GameObject object : gameObjects) {
+      for (Component c : object.components) {
+        if (c instanceof SpriteComponent) {
+          SpriteComponent sprite = (SpriteComponent) c;
+
+          if (sprite.imageData.length > 0) {
+            for (int y = 0; y < sprite.imageData.length; y++) {
+              for (int x = 0; x < sprite.imageData[0].length; x++) {
+                int rgb = sprite.imageData[y][x];
+                g.setColor(new Color(rgb, true));
+                g.fillRect((int) object.positionX + x, (int) object.positionY + y, 1, 1);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    g.dispose();
+    bufferStrategy.show();
   }
 
   // ==== GAME OBJECT ====
@@ -98,8 +157,7 @@ public class GameEngine {
     // Load image data into 2D array
     private void loadImageData() {
       try {
-        javax.imageio.ImageIO.setUseCache(false);
-        java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new java.io.File(imageFilename));
+        BufferedImage image = ImageIO.read(new File(imageFilename));
 
         int width = image.getWidth();
         int height = image.getHeight();
@@ -112,23 +170,20 @@ public class GameEngine {
         }
       }
       // Catch errors reading file
-      catch (java.io.IOException e) {
+      catch (Exception e) {
         System.out.println("[-] Error loading image: " + imageFilename);
         imageData = new int[0][0]; // Set to blank
       }
-    } // End load image data
-
-    // ==== Engine logic functions ====
-    // Run on startup
-    @Override
-    public void awake() {
-      System.out.println("[+] Sprite component setup");
     }
 
-    // Run each update loop
+    // ==== Engine logic functions ====
+    @Override
+    public void awake() {
+      return;
+    }
+
     @Override
     public void update() {
-      System.out.println("[+] Sprite loop running");
       return;
     }
   }

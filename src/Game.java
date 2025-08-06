@@ -6,7 +6,6 @@ public class Game {
 
     // Create new object and add to engine
     GameEngine.GameObject object = engine.new GameObject(1);
-    object.addComponent(sprite);
     engine.addGameObject(object);
 
     // Start
