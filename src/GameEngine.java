@@ -1,9 +1,10 @@
-// GameEngine.java - Minimal engine, with draw-to-screen support
+// GameEngine.java - Minimal engine, with draw-to-screen and input support
 
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.awt.image.*;
 import java.io.File;
 import javax.imageio.ImageIO;
@@ -36,6 +37,52 @@ public class GameEngine {
     window.setResizable(false);
     canvas.createBufferStrategy(2);
     bufferStrategy = canvas.getBufferStrategy();
+
+    // === Input setup ===
+    canvas.setFocusable(true);
+    canvas.requestFocus(); // Ensure canvas gets keyboard focus
+    canvas.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        handleKeyEvent(e, true); // Set key down
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+        handleKeyEvent(e, false); // Set key up
+      }
+    });
+  }
+
+  // Handle input key events
+  private void handleKeyEvent(KeyEvent e, boolean isDown) {
+    for (GameObject obj : gameObjects) {
+      for (Component c : obj.components) {
+        if (c instanceof PlayerControllerComponent) {
+          PlayerControllerComponent pc = (PlayerControllerComponent) c;
+
+          // Movement keys (WASD and Arrow Keys)
+          switch (e.getKeyCode()) {
+            case KeyEvent.VK_LEFT:
+            case KeyEvent.VK_A:
+              pc.isLeftDown = isDown;
+              break;
+            case KeyEvent.VK_RIGHT:
+            case KeyEvent.VK_D:
+              pc.isRightDown = isDown;
+              break;
+            case KeyEvent.VK_UP:
+            case KeyEvent.VK_W:
+              pc.isUpDown = isDown;
+              break;
+            case KeyEvent.VK_DOWN:
+            case KeyEvent.VK_S:
+              pc.isDownDown = isDown;
+              break;
+          }
+        }
+      }
+    }
   }
 
   // Engine logic
@@ -57,9 +104,9 @@ public class GameEngine {
       // Draw everything to screen
       render();
 
-      // Delay for simple fixed frame rate (~60fps)
+      // Delay for simple fixed frame rate (~250 fps)
       try {
-        Thread.sleep(16);
+        Thread.sleep(4);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -174,7 +221,7 @@ public class GameEngine {
         System.out.println("[-] Error loading image: " + imageFilename);
         imageData = new int[0][0]; // Set to blank
       }
-    }
+    } // End loadImageData
 
     // ==== Engine logic functions ====
     @Override
@@ -186,5 +233,36 @@ public class GameEngine {
     public void update() {
       return;
     }
-  }
+  } // End sprite component
+
+  // Player controller component for handling input and position updates
+  public class PlayerControllerComponent extends Component {
+    // Input booleans
+    boolean isLeftDown = false;
+    boolean isRightDown = false;
+    boolean isUpDown = false;
+    boolean isDownDown = false;
+
+    // Constructor
+    public PlayerControllerComponent() {
+      this.componentType = "player controller";
+    }
+
+    // ==== Engine logic functions ====
+    @Override
+    public void awake() {
+      return;
+    }
+
+    @Override
+    public void update() {
+      // Movement logic
+      float speed = 0.5f;
+
+      if (isLeftDown)  owner.positionX -= speed;
+      if (isRightDown) owner.positionX += speed;
+      if (isUpDown)    owner.positionY -= speed;
+      if (isDownDown)  owner.positionY += speed;
+    }
+  } // End player controller component
 }
