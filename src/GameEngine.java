@@ -116,6 +116,20 @@ public class GameEngine {
         System.out.println("[-] Error loading image: " + imageFilename);
         imageData = new int[0][0]; // Set to blank
       }
+    } // End load image data
+
+    // ==== Engine logic functions ====
+    // Run on startup
+    @Override
+    public void awake() {
+      System.out.println("[+] Sprite component setup");
+    }
+
+    // Run each update loop
+    @Override
+    public void update() {
+      System.out.println("[+] Sprite loop running");
+      return;
     }
   }
 }
