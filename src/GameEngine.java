@@ -265,4 +265,72 @@ public class GameEngine {
       if (isDownDown)  owner.positionY += speed;
     }
   } // End player controller component
+
+  // Collission component for preventing moving through other colliders
+  public class ColliderComponent extends Component {
+    // Collider size
+    public int width;
+    public int height;
+
+    // Store starting position for collision rollback
+    private float startX;
+    private float startY;
+
+    // Constructor
+    public ColliderComponent(int width, int height) {
+      this.width = width;
+      this.height = height;
+    }
+
+    // Get the bounding rectangle of this collider
+    public Rectangle getBounds() {
+      return new Rectangle(
+        (int) owner.positionX,
+        (int) owner.positionY,
+        width,
+        height
+      );
+    }
+
+    // ==== Engine logic functions ====
+
+    @Override
+    public void awake() {
+      // Nothing special yet, but could register collider in a global list if needed
+    }
+
+    @Override
+    public void update() {
+      // Save starting position before any other component moves the object
+      if (startX == 0 && startY == 0) {
+        startX = owner.positionX;
+        startY = owner.positionY;
+      }
+
+      // After all movement this frame, check for collisions
+      for (GameObject other : gameObjects) {
+        if (other == owner) continue; // Skip self
+
+        ColliderComponent otherCol = null;
+        for (Component c : other.components) {
+          if (c instanceof ColliderComponent) {
+            otherCol = (ColliderComponent) c;
+            break;
+          }
+        }
+
+        if (otherCol != null) {
+          if (getBounds().intersects(otherCol.getBounds())) {
+            // Collision detected — revert to starting position
+            owner.positionX = startX;
+            owner.positionY = startY;
+          }
+        }
+      }
+
+      // Reset starting position for the next frame
+      startX = owner.positionX;
+      startY = owner.positionY;
+    }
+  } // End collider component
 }
